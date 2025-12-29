@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ChainGuard - Blockchain Validator</title>
+    <link rel="stylesheet" href="public/styles.css">
+</head>
+<body>
+    <h1>⛓ ChainGuard</h1>
+    <h4>Validador Universal de Transações Blockchain</h4>
+
+    <div class="container">
+        <!-- Tabs -->
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab(event, 'validate')">🔍 Validar Transação</button>
+            <button class="tab" onclick="switchTab(event, 'manage')">⚙️ Gerir Redes</button>
+        </div>
+
+        <!-- Tab: Validar Transação -->
+        <div id="tab-validate" class="tab-content active">
+            <div class="card">
+                <div class="card-header">🔍 Validar Transação</div>
+
+                <div class="input-group">
+                    <label>Selecionar Rede</label>
+                    <select id="chain"></select>
+
+                    <label>Hash da Transação</label>
+                    <input type="text" id="val-hash" placeholder="0x..." autocomplete="off">
+
+                    <button onclick="validate()" id="btn-val">Validar Transação</button>
+                </div>
+
+                <div id="result"></div>
+            </div>
+        </div>
+
+        <!-- Tab: Gerir Redes -->
+        <div id="tab-manage" class="tab-content">
+            <div class="card">
+                <div class="card-header">⚙️ Adicionar Nova Rede</div>
+                
+                <div class="input-group">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                        <div>
+                            <label>Símbolo</label>
+                            <input type="text" id="man-symbol" placeholder="ETH, BTC, SOL...">
+                        </div>
+                        <div>
+                            <label>Tipo</label>
+                            <select id="man-type">
+                                <option value="EVM">EVM (Ethereum, BSC, Polygon...)</option>
+                                <option value="UTXO">UTXO (Bitcoin, Litecoin...)</option>
+                                <option value="SOLANA">Solana</option>
+                                <option value="COSMOS">Cosmos (ATOM, Osmosis, Juno...)</option>
+                                <option value="CARDANO">Cardano (ADA)</option>
+                                <option value="NEAR">NEAR Protocol</option>
+                                <option value="POLKADOT">Polkadot / Kusama</option>
+                                <option value="ALGORAND">Algorand</option>
+                                <option value="APTOS">Aptos / Sui (Move)</option>
+                                <option value="RIPPLE">Ripple (XRP)</option>
+                                <option value="TEZOS">Tezos (XTZ)</option>
+                                <option value="STELLAR">Stellar (XLM)</option>
+                                <option value="TON">TON (Telegram)</option>
+                                <option value="HEDERA">Hedera (HBAR)</option>
+                                <option value="FLOW">Flow</option>
+                                <option value="MULTIVERSX">MultiversX (EGLD)</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <label>RPC URL (opcional - será buscado automaticamente)</label>
+                    <input type="text" id="man-rpc" placeholder="https://...">
+                    
+                    <button onclick="addNetwork()">Adicionar Rede</button>
+                </div>
+
+                <div id="add-result"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="public/app.js"></script>
+</body>
+</html>
