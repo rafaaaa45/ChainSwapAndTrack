@@ -45,11 +45,11 @@ class RpcPerformanceRepository {
          error_count,
          CASE 
            WHEN (success_count + error_count) = 0 THEN 0
-           ELSE ROUND((success_count::FLOAT / (success_count + error_count)) * 100, 2)
+           ELSE ROUND(((success_count::FLOAT / (success_count + error_count)) * 100)::numeric, 2)
          END as success_rate,
          CASE
            WHEN success_count = 0 THEN 0
-           ELSE ROUND(total_response_time_ms::FLOAT / success_count, 2)
+           ELSE ROUND((total_response_time_ms::FLOAT / success_count)::numeric, 2)
          END as avg_response_time_ms
        FROM rpc_performance
        WHERE chain = $1 
