@@ -8,7 +8,7 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 -- BLOCKCHAIN NETWORKS
 -- Migrated from networks.json
 -- =====================================================
-CREATE TABLE blockchain_networks (
+CREATE TABLE IF NOT EXISTS blockchain_networks (
     id SERIAL PRIMARY KEY,
     name VARCHAR(50) UNIQUE NOT NULL,
     type VARCHAR(20) NOT NULL,
@@ -18,15 +18,15 @@ CREATE TABLE blockchain_networks (
     updated_at TIMESTAMP DEFAULT NOW()
 );
 
-CREATE INDEX idx_networks_name ON blockchain_networks(name);
-CREATE INDEX idx_networks_type ON blockchain_networks(type);
-CREATE INDEX idx_networks_enabled ON blockchain_networks(enabled);
+CREATE INDEX IF NOT EXISTS idx_networks_name ON blockchain_networks(name);
+CREATE INDEX IF NOT EXISTS idx_networks_type ON blockchain_networks(type);
+CREATE INDEX IF NOT EXISTS idx_networks_enabled ON blockchain_networks(enabled);
 
 -- =====================================================
 -- RPC CACHE
 -- Migrated from chains-cache.json
 -- =====================================================
-CREATE TABLE rpc_cache (
+CREATE TABLE IF NOT EXISTS rpc_cache (
     id SERIAL PRIMARY KEY,
     chain_id INTEGER,
     chain_name VARCHAR(100),
@@ -36,15 +36,15 @@ CREATE TABLE rpc_cache (
     expires_at TIMESTAMP NOT NULL
 );
 
-CREATE INDEX idx_rpc_cache_chain_id ON rpc_cache(chain_id);
-CREATE INDEX idx_rpc_cache_chain_name ON rpc_cache(chain_name);
-CREATE INDEX idx_rpc_cache_expires ON rpc_cache(expires_at);
+CREATE INDEX IF NOT EXISTS idx_rpc_cache_chain_id ON rpc_cache(chain_id);
+CREATE INDEX IF NOT EXISTS idx_rpc_cache_chain_name ON rpc_cache(chain_name);
+CREATE INDEX IF NOT EXISTS idx_rpc_cache_expires ON rpc_cache(expires_at);
 
 -- =====================================================
 -- VALIDATION HISTORY
 -- Store all transaction validations
 -- =====================================================
-CREATE TABLE validation_history (
+CREATE TABLE IF NOT EXISTS validation_history (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     chain VARCHAR(50) NOT NULL,
     tx_hash VARCHAR(255) NOT NULL,
@@ -56,16 +56,16 @@ CREATE TABLE validation_history (
     validated_at TIMESTAMP DEFAULT NOW()
 );
 
-CREATE INDEX idx_validations_chain ON validation_history(chain);
-CREATE INDEX idx_validations_tx_hash ON validation_history(tx_hash);
-CREATE INDEX idx_validations_validated_at ON validation_history(validated_at);
-CREATE INDEX idx_validations_found ON validation_history(found);
+CREATE INDEX IF NOT EXISTS idx_validations_chain ON validation_history(chain);
+CREATE INDEX IF NOT EXISTS idx_validations_tx_hash ON validation_history(tx_hash);
+CREATE INDEX IF NOT EXISTS idx_validations_validated_at ON validation_history(validated_at);
+CREATE INDEX IF NOT EXISTS idx_validations_found ON validation_history(found);
 
 -- =====================================================
 -- RPC PERFORMANCE TRACKING
 -- Monitor RPC reliability and speed
 -- =====================================================
-CREATE TABLE rpc_performance (
+CREATE TABLE IF NOT EXISTS rpc_performance (
     id SERIAL PRIMARY KEY,
     chain VARCHAR(50) NOT NULL,
     rpc_url TEXT NOT NULL,
@@ -79,14 +79,14 @@ CREATE TABLE rpc_performance (
     UNIQUE(chain, rpc_url)
 );
 
-CREATE INDEX idx_rpc_perf_chain ON rpc_performance(chain);
-CREATE INDEX idx_rpc_perf_updated ON rpc_performance(updated_at);
+CREATE INDEX IF NOT EXISTS idx_rpc_perf_chain ON rpc_performance(chain);
+CREATE INDEX IF NOT EXISTS idx_rpc_perf_updated ON rpc_performance(updated_at);
 
 -- =====================================================
 -- API REQUEST LOGS
 -- Audit trail for API usage
 -- =====================================================
-CREATE TABLE api_logs (
+CREATE TABLE IF NOT EXISTS api_logs (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     endpoint VARCHAR(100) NOT NULL,
     method VARCHAR(10) NOT NULL,
@@ -98,16 +98,16 @@ CREATE TABLE api_logs (
     created_at TIMESTAMP DEFAULT NOW()
 );
 
-CREATE INDEX idx_api_logs_endpoint ON api_logs(endpoint);
-CREATE INDEX idx_api_logs_created_at ON api_logs(created_at);
-CREATE INDEX idx_api_logs_ip ON api_logs(ip_address);
+CREATE INDEX IF NOT EXISTS idx_api_logs_endpoint ON api_logs(endpoint);
+CREATE INDEX IF NOT EXISTS idx_api_logs_created_at ON api_logs(created_at);
+CREATE INDEX IF NOT EXISTS idx_api_logs_ip ON api_logs(ip_address);
 
 -- =====================================================
 -- VIEWS FOR ANALYTICS
 -- =====================================================
 
 -- Validation statistics by chain
-CREATE VIEW validation_stats AS
+CREATE OR REPLACE VIEW validation_stats AS
 SELECT 
     chain,
     COUNT(*) as total_validations,
@@ -118,7 +118,7 @@ FROM validation_history
 GROUP BY chain, DATE_TRUNC('day', validated_at);
 
 -- RPC health score
-CREATE VIEW rpc_health AS
+CREATE OR REPLACE VIEW rpc_health AS
 SELECT 
     chain,
     rpc_url,
@@ -136,7 +136,7 @@ FROM rpc_performance
 ORDER BY success_rate DESC;
 
 -- =====================================================
--- FUNCTIONS
+-- FUNCTIONS & TRIGGERS
 -- =====================================================
 
 -- Auto-update updated_at timestamp
@@ -148,11 +148,14 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+-- Drop triggers if they exist so we don't get errors trying to recreate them
+DROP TRIGGER IF EXISTS update_networks_updated_at ON blockchain_networks;
 CREATE TRIGGER update_networks_updated_at
     BEFORE UPDATE ON blockchain_networks
     FOR EACH ROW
     EXECUTE FUNCTION update_updated_at_column();
 
+DROP TRIGGER IF EXISTS update_rpc_performance_updated_at ON rpc_performance;
 CREATE TRIGGER update_rpc_performance_updated_at
     BEFORE UPDATE ON rpc_performance
     FOR EACH ROW

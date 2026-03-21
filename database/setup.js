@@ -3,17 +3,9 @@ const fs = require('fs');
 const path = require('path');
 require('dotenv').config();
 
-/**
- * Script de Setup do PostgreSQL
- * 1. Cria database se não existir
- * 2. Executa schema.sql
- * 3. Migra dados de JSON para PostgreSQL
- */
-
 async function setup() {
-  console.log('🚀 Iniciando setup do PostgreSQL...\n');
+  console.log('🚀 Iniciando setup FORÇADO do PostgreSQL...\n');
 
-  // Conectar ao postgres (database padrão) para criar nossa database
   const dbName = process.env.DATABASE_URL?.split('/').pop() || 'chainguard_db';
   const baseUrl = process.env.DATABASE_URL?.replace(`/${dbName}`, '/postgres');
 
@@ -21,99 +13,63 @@ async function setup() {
 
   try {
     await adminClient.connect();
-    console.log('✅ Conectado ao PostgreSQL');
-
-    // Criar database se não existir
-    const dbCheck = await adminClient.query(
-      `SELECT 1 FROM pg_database WHERE datname = $1`,
-      [dbName]
-    );
-
+    const dbCheck = await adminClient.query(`SELECT 1 FROM pg_database WHERE datname = $1`, [dbName]);
     if (dbCheck.rowCount === 0) {
       await adminClient.query(`CREATE DATABASE ${dbName}`);
-      console.log(`✅ Database '${dbName}' criada`);
-    } else {
-      console.log(`ℹ️  Database '${dbName}' já existe`);
+      console.log(`✅ Database criada`);
     }
-
     await adminClient.end();
 
-    // Conectar à nossa database
     const client = new Client({ connectionString: process.env.DATABASE_URL });
     await client.connect();
-    console.log(`✅ Conectado à database '${dbName}'`);
 
-    // Executar schema.sql
+    // 1. GARANTIR QUE A TABELA EXISTE
     const schemaPath = path.join(__dirname, 'schema.sql');
-    const schema = fs.readFileSync(schemaPath, 'utf8');
-    
-    console.log('\n📋 Executando schema.sql...');
-    await client.query(schema);
-    console.log('✅ Schema criado com sucesso');
+    if (fs.existsSync(schemaPath)) {
+        const schema = fs.readFileSync(schemaPath, 'utf8');
+        await client.query(schema);
+        console.log('✅ Schema aplicado');
+    } else {
+        // Fallback caso o ficheiro schema não esteja acessível
+        await client.query(`
+            CREATE TABLE IF NOT EXISTS blockchain_networks (
+                id SERIAL PRIMARY KEY,
+                name TEXT UNIQUE NOT NULL,
+                type TEXT NOT NULL,
+                rpc TEXT NOT NULL,
+                enabled BOOLEAN DEFAULT true,
+                updated_at TIMESTAMP DEFAULT NOW()
+            );
+        `);
+    }
 
-    // Migrar dados de networks.json
-    await migrateNetworks(client);
+    // 2. INSERIR ALCHEMY COMO DEFAULT (Com Correção de Array para o Postgres)
+    const ethRpc = process.env.ALCHEMY_ETH_RPC || "https://eth.drpc.org";
+    
+    console.log(`🛡️  Configurando Ethereum Default...`);
+    
+    // O Postgres espera {valor} se a coluna for um array
+    const rpcValue = `{${ethRpc}}`; 
+
+    await client.query(
+        `INSERT INTO blockchain_networks (name, type, rpc, enabled) 
+         VALUES ($1, $2, $3, true) 
+         ON CONFLICT (name) DO UPDATE SET rpc = $3, enabled = true`,
+        ['ethereum', 'evm', rpcValue]
+    );
+
+    // 3. VERIFICAR SE ESTÁ LÁ
+    const check = await client.query('SELECT name FROM blockchain_networks');
+    console.log(`📊 Total de redes na BD: ${check.rowCount}`);
+    check.rows.forEach(r => console.log(`   - ${r.name}`));
 
     await client.end();
-    console.log('\n🎉 Setup concluído com sucesso!');
+    console.log('\n🎉 Setup concluído!');
     
   } catch (error) {
     console.error('\n❌ Erro no setup:', error.message);
-    throw error;
+    process.exit(1);
   }
 }
 
-/**
- * Migrar networks.json para PostgreSQL
- */
-async function migrateNetworks(client) {
-  const networksPath = path.join(__dirname, '..', 'networks.json');
-  
-  if (!fs.existsSync(networksPath)) {
-    console.log('ℹ️  networks.json não encontrado, usando dados padrão do schema');
-    return;
-  }
-
-  try {
-    const networksData = JSON.parse(fs.readFileSync(networksPath, 'utf8'));
-    const networks = Object.entries(networksData);
-
-    if (networks.length === 0) {
-      console.log('ℹ️  networks.json vazio');
-      return;
-    }
-
-    console.log(`\n📦 Migrando ${networks.length} redes de networks.json...`);
-
-    for (const [name, config] of networks) {
-      try {
-        await client.query(
-          `INSERT INTO blockchain_networks (name, type, rpc, enabled) 
-           VALUES ($1, $2, $3, true) 
-           ON CONFLICT (name) DO UPDATE 
-           SET type = $2, rpc = $3, enabled = true, updated_at = NOW()`,
-          [name.toLowerCase(), config.type, config.rpc]
-        );
-        console.log(`  ✅ ${name}`);
-      } catch (err) {
-        console.log(`  ❌ ${name}: ${err.message}`);
-      }
-    }
-
-    console.log('✅ Migração de networks.json concluída');
-  } catch (error) {
-    console.error('❌ Erro na migração de networks.json:', error.message);
-  }
-}
-
-// Executar se chamado diretamente
-if (require.main === module) {
-  setup()
-    .then(() => process.exit(0))
-    .catch((error) => {
-      console.error(error);
-      process.exit(1);
-    });
-}
-
-module.exports = { setup };
+setup();
