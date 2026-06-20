@@ -1,5 +1,5 @@
 :root { 
-    --primary: #00ff88; 
+    --primary: #00ffcc; /* Ajustei ligeiramente para o ciano néon para dar aquele ar super hacker */
     --secondary: #00d9ff; 
     --bg: #0a0a0a; 
     --card: #141414; 
@@ -141,7 +141,7 @@ button {
 
 button:hover { 
     transform: translateY(-2px); 
-    box-shadow: 0 8px 20px rgba(0, 255, 136, 0.3); 
+    box-shadow: 0 8px 20px rgba(0, 255, 204, 0.3); 
 }
 
 button:active { 
@@ -221,14 +221,8 @@ button:active {
 }
 
 @keyframes fadeIn { 
-    from { 
-        opacity: 0; 
-        transform: translateY(10px); 
-    } 
-    to { 
-        opacity: 1; 
-        transform: translateY(0); 
-    } 
+    from { opacity: 0; transform: translateY(10px); } 
+    to { opacity: 1; transform: translateY(0); } 
 }
 
 .loading {
@@ -237,87 +231,123 @@ button:active {
     color: var(--primary);
 }
 
-/* --- TIMELINE DE AUDITORIA (NOVO) --- */
+
+/* ==========================================================================
+   TIMELINE DE AUDITORIA CROSS-CHAIN (NOVO E DEFINITIVO)
+   ========================================================================== */
+
+.timeline-container {
+    background-color: #111;
+    border: 1px solid #333;
+    border-radius: 8px;
+    padding: 20px;
+    margin-top: 20px;
+    color: #fff;
+    /* Apanha a animação de fade in que já tinhas nas results */
+    animation: fadeIn 0.3s; 
+}
+
+.timeline-title {
+    color: var(--primary);
+    text-align: center;
+    margin-bottom: 20px;
+    font-weight: bold;
+    letter-spacing: 2px;
+}
+
 .timeline {
     position: relative;
-    padding: 20px 0;
-    margin-top: 15px;
+    padding-left: 30px;
 }
 
-.timeline-item {
-    position: relative;
-    margin-left: 30px;
-    margin-bottom: 25px;
-    padding: 15px;
-    background: #1a1a1a;
-    border-radius: 8px;
-    border: 1px solid #333;
-    border-left: 4px solid var(--secondary); /* Azul para normal */
-    transition: 0.3s;
-}
-
-.timeline-item::before {
+/* Linha vertical que liga as bolinhas */
+.timeline::before {
     content: '';
     position: absolute;
-    left: -23px;
-    top: 18px;
-    width: 12px;
-    height: 12px;
-    background: var(--bg);
-    border: 3px solid var(--secondary);
-    border-radius: 50%;
-    z-index: 2;
-}
-
-/* Linha vertical que liga os itens */
-.timeline::after {
-    content: '';
-    position: absolute;
-    left: 10px;
-    top: 0;
-    bottom: 0;
+    left: 14px;
+    top: 10px;
+    bottom: 10px;
     width: 2px;
-    background: #333;
+    background-color: #333;
+}
+
+.timeline-step {
+    position: relative;
+    margin-bottom: 25px;
+    padding-left: 20px;
+}
+
+/* As bolinhas (ícones) */
+.step-icon {
+    position: absolute;
+    left: -30px;
+    top: 0;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background-color: #222;
+    border: 2px solid #555;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
     z-index: 1;
 }
 
-/* Estilo para eventos de Bridge (Destaque Amarelo/Dourado) */
-.timeline-item.event-bridge {
-    border-left-color: #f1c40f;
-    box-shadow: inset 0 0 10px rgba(241, 196, 15, 0.1);
+.step-content h4 {
+    margin: 0 0 5px 0;
+    font-size: 16px;
+    font-family: 'Segoe UI', sans-serif;
 }
 
-.timeline-item.event-bridge::before {
-    border-color: #f1c40f;
+.step-content p {
+    margin: 0 0 10px 0;
+    font-size: 13px;
+    color: #aaa;
+    word-break: break-all;
+    font-family: 'Courier New', monospace; /* Fica muito bem para as Hashes! */
 }
 
-/* Estilo para o Destino (Pendente) */
-.timeline-item.dest-poly {
-    border-left-color: #8247e5;
-    background: linear-gradient(90deg, #1d142b 0%, #141414 100%);
-}
-
-.timeline-item.dest-poly::before {
-    border-color: #8247e5;
-}
-
-.status-blink {
-    color: #f1c40f;
-    font-weight: bold;
-    font-size: 0.8rem;
-    text-transform: uppercase;
-    animation: blinker 1.5s linear infinite;
-}
-
-@keyframes blinker {
-    50% { opacity: 0.3; }
-}
-
-.badge-network {
-    font-size: 0.7rem;
-    padding: 2px 6px;
+/* As badges (Etiquetas de estado) */
+.status-badge {
+    padding: 3px 8px;
     border-radius: 4px;
-    background: #333;
-    color: #eee;
-    margin-left: 8px;
+    font-size: 11px;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+/* --- ESTADOS DINÂMICOS DA TIMELINE --- */
+
+/* Estado 1: Concluído (Verde/Ciano Néon) */
+.timeline-step.completed .step-icon {
+    background-color: var(--primary);
+    border-color: var(--primary);
+    color: #000;
+}
+.timeline-step.completed h4 { 
+    color: var(--primary); 
+}
+.status-badge.success { 
+    background-color: rgba(0, 255, 204, 0.2); 
+    color: var(--primary); 
+}
+
+/* Estado 2: Em Processamento (Amarelo) */
+.timeline-step.processing .step-icon {
+    border-color: #ffcc00;
+    color: #ffcc00;
+    animation: spin 2s linear infinite;
+}
+.timeline-step.processing h4 { 
+    color: #ffcc00; 
+}
+.status-badge.pending { 
+    background-color: rgba(255, 204, 0, 0.2); 
+    color: #ffcc00; 
+}
+
+/* Animação de rodar para o ícone de processamento (se quiseres usar futuramente) */
+@keyframes spin { 
+    100% { transform: rotate(360deg); } 
 }

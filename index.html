@@ -32,15 +32,50 @@
                     <button onclick="validate()" id="btn-val">Validar Transação</button>
                 </div>
 
+                <!-- A tua div original de resultado -->
                 <div id="result"></div>
+
+                <!-- A NOVA TIMELINE (Escondida por defeito) -->
+                <div id="resultado-timeline" class="timeline-container" style="display: none;">
+                    <h3 class="timeline-title">STATUS CROSS-CHAIN</h3>
+                    
+                    <div class="timeline">
+                        <div class="timeline-step completed" id="step-1">
+                            <div class="step-icon">✓</div>
+                            <div class="step-content">
+                                <h4>1. Bloqueio na Origem</h4>
+                                <p id="tx-origin-hash">Hash: Aguardando...</p>
+                                <span class="status-badge success">Concluído</span>
+                            </div>
+                        </div>
+
+                        <div class="timeline-step processing" id="step-2">
+                            <div class="step-icon">⚙</div>
+                            <div class="step-content">
+                                <h4>2. Validação da Ponte (Relayer)</h4>
+                                <p>A verificar provas criptográficas...</p>
+                                <span class="status-badge pending">Em Processamento</span>
+                            </div>
+                        </div>
+
+                        <div class="timeline-step inactive" id="step-3">
+                            <div class="step-icon">⧖</div>
+                            <div class="step-content">
+                                <h4>3. Cunhagem no Destino</h4>
+                                <p id="tx-dest-hash">A aguardar confirmação da rede...</p>
+                                <span class="status-badge waiting">Aguardando</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
             </div>
         </div>
 
-        <!-- Tab: Gerir Redes -->
+        <!-- Tab: Gerir Redes (MANTIDO IGUAL AO TEU) -->
         <div id="tab-manage" class="tab-content">
             <div class="card">
                 <div class="card-header">⚙️ Adicionar Nova Rede</div>
-                
                 <div class="input-group">
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
                         <div>
@@ -53,7 +88,7 @@
                                 <option value="EVM">EVM (Ethereum, BSC, Polygon...)</option>
                                 <option value="UTXO">UTXO (Bitcoin, Litecoin...)</option>
                                 <option value="SOLANA">Solana</option>
-                                <option value="COSMOS">Cosmos (ATOM, Osmosis, Juno...)</option>
+                                <option value="COSMOS">Cosmos (ATOM...)</option>
                                 <option value="CARDANO">Cardano (ADA)</option>
                                 <option value="NEAR">NEAR Protocol</option>
                                 <option value="POLKADOT">Polkadot / Kusama</option>

@@ -21,6 +21,9 @@ app.use('/public', express.static(path.join(__dirname, 'public')));
 
 const PORT = process.env.PORT || 3000;
 
+const batchValidateRoute = require('./batch-validate-route');
+app.use(batchValidateRoute);
+
 // Swagger/OpenAPI config (Limpo para não dar erros de YAML)
 const swaggerOptions = {
     definition: {
